@@ -34,7 +34,7 @@ public class LanguageModalI18nTextServlet extends SlingAllMethodsServlet {
 		String language = request.getParameter("language");
 		String textData = request.getParameter("text");
 
-		LOG.info("doPost request =" + basename + "|" + language + "|" + textData);
+		LOG.debug("doPost request =" + basename + "|" + language + "|" + textData);
 
 		// Get the required resourcebundle and I18n translator.
 		Locale locale = new Locale(language);
@@ -46,10 +46,6 @@ public class LanguageModalI18nTextServlet extends SlingAllMethodsServlet {
 			textData = textData.substring(1, textData.length());
 		if (textData.endsWith("]"))
 			textData = textData.substring(0, textData.length() - 1);
-
-		//LinkedHashMap<String, String> hMapData = new LinkedHashMap<String, String>();
-
-		//StringBuffer sb = new StringBuffer();
 
 		JSONArray myJsonArray = new JSONArray();
 		ArrayList<String> list = new ArrayList<String>();
@@ -67,44 +63,27 @@ public class LanguageModalI18nTextServlet extends SlingAllMethodsServlet {
 			String strId = keydata[0].trim();
 			String strName = keydata[1].trim();
 
-			/*
-			 * if (strName.startsWith("\"")) strName = strName.substring(1,
-			 * strName.length()); if (strName.endsWith("\"")) strName = strName.substring(0,
-			 * strName.length() - 1); if (strId.startsWith("\"")) strId = strId.substring(1,
-			 * strId.length()); if (strId.endsWith("\"")) strId = strId.substring(0,
-			 * strId.length() - 1);
-			 */
+			LOG.debug("doPost strName = " + strName);
 
-			LOG.info("doPost strName = " + strName);
+			String keyName = "fd_" + strName;
+					
 			// Translate the display value.
-			String translatedText = i18n.get("fd_" + strName);
-			LOG.info("doPost translatedText = " + translatedText);
+			String translatedText = i18n.get(keyName);
 			
-			// Append the translated text to the new text string.
-			//sb.append(strId + "=" + translatedText + ",");
+			if (translatedText.startsWith("fd_")) {
+				translatedText = strName;
+			}
 			
-			//hMapData.put(strId, translatedText);
+			LOG.debug("doPost translatedText = " + translatedText);
 			
-			//myJsonArray.put(strId + "=" + translatedText);
 			list.add(strId + "=" + translatedText);
 		}
 		
-		LOG.info("Locale.ENGLISH="+Locale.ENGLISH);
-		
-        // Define a collator for US English.
-        //Collator collator = Collator.getInstance(Locale.ENGLISH);
-
-        // Sort the list base on the collator
-        //Collections.sort(list, collator);
+        LOG.debug("doPost list = " + list.toString());
         
-        LOG.info("doPost list = " + list.toString());
-        
-		//String responseData = sb.toString();
-		//String responseData = hMapData.toString();
-		//String responseData = myJsonArray.toString();
         String responseData = new Gson().toJson(list);
 
-		LOG.info("doPost responseData = " + responseData);
+		LOG.debug("doPost responseData = " + responseData);
 
 		response.setContentType("application/json");
 		
@@ -127,14 +106,30 @@ public class LanguageModalI18nTextServlet extends SlingAllMethodsServlet {
 		String language = request.getParameter("language");
 		String textData = request.getParameter("text");
 
+		LOG.debug("doGet request =" + basename + "|" + language + "|" + textData);
+
 		Locale locale = new Locale(language);
 		ResourceBundle resourceBundle = request.getResourceBundle(basename, locale);
 		I18n i18n = new I18n(resourceBundle);
 
+		// Cleanup data input
+		if (textData.startsWith("["))
+			textData = textData.substring(1, textData.length());
+		if (textData.endsWith("]"))
+			textData = textData.substring(0, textData.length() - 1);
+
 		String translatedText = i18n.get(textData);
 
+		LOG.debug("doGet translatedText = " + translatedText);
+
+        String responseData = new Gson().toJson(translatedText);
+
+		LOG.debug("doPost responseData = " + responseData);
+
+		response.setContentType("application/json");
+
 		try {
-			response.getWriter().write(translatedText);
+			response.getWriter().write(responseData);
 		} catch (IOException e) {
 			LOG.error("Error while getting i18n text for component." + e);
 		}
